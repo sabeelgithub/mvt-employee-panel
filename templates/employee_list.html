@@ -53,7 +53,9 @@
           <td class="py-3 px-6 text-gray-800">{{ employee.email }}</td>
           <td class="py-3 px-6 text-gray-600">{{ employee.position }}</td>
           <td class="py-3 px-6 text-gray-600">
-            <a href="{% url 'employee_update' employee.id %}" class="bg-blue-500 text-white p-2 rounded-md">Edit</a>
+
+              <a href="{% url 'employee_view' employee.id %}" class="py-3 px-6 text-blue-600 underline">View</a>
+
           </td>
         </tr>
         {% endfor %}

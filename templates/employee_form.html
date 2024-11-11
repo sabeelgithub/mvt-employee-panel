@@ -12,110 +12,52 @@
             <h2 class="text-2xl font-semibold text-center text-gray-700 mb-4">
                 {% if is_update %}Edit Employee{% else %}Add Employee{% endif %}
             </h2>
-            <form id="employee-form" method="POST" action="{% url 'employee_create' %}" class="space-y-4">
-                {% csrf_token %}
-                
-                <!-- Form fields for Employee details -->
 
+            <form id="employee-form" method="post" action="{% if is_update %}{% url 'employee_update' employee.id %}{% else %}{% url 'employee_create' %}{% endif %}" class="space-y-4">
+                {% csrf_token %}
+
+                <!-- Employee details fields -->
                 <div class="space-y-4">
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-600">Name</label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name" 
-                            value="{{ form.name.value|default_if_none:'' }}"
-                            placeholder="Enter Employee Name"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
+                        <input type="text" id="name" name="name" value="{{ employee.name }}" placeholder="Enter Employee Name" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
                     <div>
                         <label for="position" class="block text-sm font-medium text-gray-600">Position</label>
-                        <input
-                            type="text"
-                            id="position"
-                            name="position" 
-                            value="{{ form.position.value|default_if_none:'' }}"
-                            placeholder="Enter Position of Employee"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
+                        <input type="text" id="position" name="position" value="{{ employee.position }}" placeholder="Enter Position of Employee" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-600">Email</label>
-                        <input
-                            type="text"
-                            id="email"
-                            name="email"  
-                            value="{{ form.email.value|default_if_none:'' }}"
-                            placeholder="Enter Email of Employee"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
+                        <input type="email" id="email" name="email" value="{{ employee.email }}" placeholder="Enter Email of Employee" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
                 </div>
-                
-                 
-                <!-- <div class="space-y-4">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-600">Name</label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value="{{ form.name.value|default_if_none:'' }}"
-                            placeholder="Enter Employee Name"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label for="position" class="block text-sm font-medium text-gray-600">Position</label>
-                        <input
-                            type="text"
-                            id="position"
-                            name="position"
-                            value="{{ form.position.value|default_if_none:'' }}"
-                            placeholder="Enter Position of Employee"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-600">Email</label>
-                        <input
-                            type="text"
-                            id="email"
-                            name="email"
-                            value="{{ form.email.value|default_if_none:'' }}"
-                            placeholder="Enter Email of Employee"
-                            required
-                            class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        />
-                    </div>
-                </div> -->
 
-                <!-- Custom Fields Section -->
+                <!-- Custom Fields Container -->
                 <div id="custom-fields-container" class="space-y-4">
-                    <!-- Dynamically added custom fields will appear here -->
+                    {% if employee.custom_fields %}
+                        {% for key, value in employee.custom_fields.items %}
+                            <div class="flex gap-3 mb-3 p-2 border rounded-md custom-field">
+                                <input type="text" name="custom_fields[name][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ key }}" placeholder="Custom Field Name">
+                                <input type="text" name="custom_fields[value][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ value }}" placeholder="Custom Field Value">
+                                <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-md ml-4 delete-custom-field" onclick="removeCustomField(this)">Delete</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
+                <!-- Hidden input for custom fields JSON -->
+                <input type="hidden" required id="custom-fields-json" name="custom_fields">
                 <!-- Button to add more custom fields -->
-                <button type="button" id="add-custom-field" class="w-full bg-blue-500 text-white p-2 rounded-md mt-4">
-                    Add Custom Field
-                </button>
+                <button type="button" id="add-custom-field" class="w-full bg-blue-500 text-white p-2 rounded-md mt-4">Add Custom Field</button>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full bg-green-500 text-white p-2 rounded-md mt-4">
-                    {% if is_update %}Update{% else %}Save{% endif %}
-                </button>
+                <button type="submit" class="w-full bg-green-500 text-white p-2 rounded-md mt-4">Save</button>
             </form>
 
             <div id="form-messages" class="mt-4">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="text-red-500">{{ message }}</div>
+                        <div class="text-green-500">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
             </div>
@@ -123,43 +65,66 @@
     </div>
 
     <script>
-        // Add custom field functionality without AJAX
+        // Add a new custom field
         document.getElementById('add-custom-field').addEventListener('click', function() {
-            const container = document.getElementById('custom-fields-container');
-            
-            // Create a new div for the custom field
-            const newField = document.createElement('div');
-            newField.className = "flex items-center gap-3 mb-3 p-2 border rounded-md";
+            var container = document.getElementById('custom-fields-container');
+            var newField = document.createElement('div');
+            newField.classList.add('flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field');
 
-            // Custom field name input
-            const nameInput = document.createElement('input');
+            // Name input for custom field
+            var nameInput = document.createElement('input');
             nameInput.type = 'text';
-            nameInput.name = 'custom_fields_name[]';
-            nameInput.className = 'w-full p-2 border border-gray-300 rounded-md';
+            nameInput.name = 'custom_fields[name][]';
+            nameInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
             nameInput.placeholder = 'Custom Field Name';
 
-            // Custom field value input
-            const valueInput = document.createElement('input');
+            // Value input for custom field
+            var valueInput = document.createElement('input');
             valueInput.type = 'text';
-            valueInput.name = 'custom_fields_value[]';
-            valueInput.className = 'w-full p-2 border border-gray-300 rounded-md';
+            valueInput.name = 'custom_fields[value][]';
+            valueInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
             valueInput.placeholder = 'Custom Field Value';
 
-            // Delete button for the custom field
-            const deleteButton = document.createElement('button');
+            // Delete button for this field
+            var deleteButton = document.createElement('button');
             deleteButton.type = 'button';
-            deleteButton.className = 'bg-red-500 text-white px-4 py-2 rounded-md ml-4';
+            deleteButton.classList.add('bg-red-500', 'text-white', 'px-4', 'py-2', 'rounded-md', 'ml-4');
             deleteButton.textContent = 'Delete';
-            deleteButton.addEventListener('click', function() {
-                container.removeChild(newField);
-            });
+            deleteButton.onclick = function() {
+                removeCustomField(deleteButton);
+            };
 
-            // Append the inputs and delete button to the custom field container
             newField.appendChild(nameInput);
             newField.appendChild(valueInput);
             newField.appendChild(deleteButton);
+
             container.appendChild(newField);
+        });
+
+        // Remove a custom field and ensure it's not submitted
+        function removeCustomField(button) {
+            var customFieldContainer = button.closest('.custom-field');
+            if (customFieldContainer) {
+                customFieldContainer.remove();
+            }
+        }
+
+        // Prepare JSON for form submission
+        document.getElementById('employee-form').addEventListener('submit', function(e) {
+            var customFields = {};
+            var nameInputs = document.querySelectorAll('input[name="custom_fields[name][]"]');
+            var valueInputs = document.querySelectorAll('input[name="custom_fields[value][]"]');
+
+            for (var i = 0; i < nameInputs.length; i++) {
+                if (nameInputs[i].value && valueInputs[i].value) {
+                    customFields[nameInputs[i].value] = valueInputs[i].value;
+                }
+            }
+
+            // Set custom fields as JSON string with key-value pairs
+            document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
         });
     </script>
 </body>
 </html>
+
