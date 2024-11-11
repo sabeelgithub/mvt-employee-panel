@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,9 +29,9 @@
     type="text"
     name="search"
     value="{{ search_term }}"
-    placeholder="Search employees by name or position..."
+    placeholder="Search employees by name..."
     class="w-full p-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    oninput="location.href='?search=' + this.value"
+    id="search-input"
   />
 
   <!-- Employee Table -->
@@ -46,16 +45,14 @@
           <th class="py-3 px-6 text-left">Action</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="employee-table-body">
         {% for employee in employees %}
         <tr class="border-b border-gray-200 hover:bg-gray-100">
           <td class="py-3 px-6 text-gray-800">{{ employee.name }}</td>
           <td class="py-3 px-6 text-gray-800">{{ employee.email }}</td>
           <td class="py-3 px-6 text-gray-600">{{ employee.position }}</td>
           <td class="py-3 px-6 text-gray-600">
-
               <a href="{% url 'employee_view' employee.id %}" class="py-3 px-6 text-blue-600 underline">View</a>
-
           </td>
         </tr>
         {% endfor %}
@@ -63,5 +60,29 @@
     </table>
   </div>
 </div>
+
+
+</script>
+<script>
+  document.getElementById('search-input').addEventListener('input', function(event) {
+    var searchTerm = event.target.value;
+
+    // Make an AJAX request with the search term
+    fetch('?search=' + searchTerm, {
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest'
+  }
+})
+.then(response => response.json())
+.then(data => {
+  // Update the table body with the returned HTML rows
+  if (data.html) {
+    document.getElementById('employee-table-body').innerHTML = data.html;
+  }
+})
+.catch(error => console.log('Error:', error));
+  });
+</script>
+
 </body>
 </html>

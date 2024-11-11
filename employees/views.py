@@ -2,28 +2,40 @@
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.urls import reverse
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 from .models import Employee
 from .forms import EmployeeForm
 
+
 class EmployeesList(View):
 
     @method_decorator(login_required)
-    def get(self,request):
+    def get(self, request):
         employees = Employee.objects.filter(user=request.user).order_by('-created_at')
         search_term = request.GET.get('search', '')
 
         if search_term:
             employees = employees.filter(name__icontains=search_term)
 
+        # Check if the request is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Render the table rows to send back in the response
+            html = render_to_string('employee_table_rows.html', {'employees': employees})
+            return JsonResponse({'html': html})
+        
+        # Return the normal response for the page load
         context = {
             'employees': employees,
             'search_term': search_term,
         }
         return render(request, 'employee_list.html', context)
+
 
 
 class EmployeeCreate(View):
@@ -67,6 +79,7 @@ class EmployeeUpdate(View):
         }
         return render(request, 'employee_form.html', context)
     
+    @method_decorator(login_required)
     def post(self,request,id):
         employee = Employee.objects.filter(user=request.user).get(id=id)
         
@@ -86,4 +99,9 @@ class EmployeeUpdate(View):
             return render(request, 'employee_form.html', context)
 
 
-
+class EmployeeDelete(View):
+    @method_decorator(login_required)
+    def delete(self, request, id):
+        employee = Employee.objects.filter(user=request.user).get(id=id)
+        employee.delete()
+        return JsonResponse({'message': 'Employee deleted successfully'}, status=200)

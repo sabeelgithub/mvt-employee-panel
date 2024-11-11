@@ -1,0 +1,13 @@
+<tbody id="employee-table-body">
+    {% for employee in employees %}
+    <tr class="border-b border-gray-200 hover:bg-gray-100">
+      <td class="py-3 px-6 text-gray-800">{{ employee.name }}</td>
+      <td class="py-3 px-6 text-gray-800">{{ employee.email }}</td>
+      <td class="py-3 px-6 text-gray-600">{{ employee.position }}</td>
+      <td class="py-3 px-6 text-gray-600">
+        <a href="{% url 'employee_view' employee.id %}" class="py-3 px-6 text-blue-600 underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +58,7 @@
             <div id="form-messages" class="mt-4">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="text-green-500">{{ message }}</div>
+                        <div id="rg" class="text-green-500">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
             </div>
@@ -123,6 +124,21 @@
 
             // Set custom fields as JSON string with key-value pairs
             document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const SuccessMessage = document.getElementById("rg");
+            if (SuccessMessage) {
+                setTimeout(() => {
+                    SuccessMessage.style.transition = "opacity 1s";
+                    SuccessMessage.style.opacity = 0;
+                }, 1000); // 5 seconds delay
+
+                // Optionally, remove the element from the DOM after fade-out
+                setTimeout(() => {
+                    SuccessMessage.style.display = "none";
+                }, 6000); // Hide after the transition
+            }
         });
     </script>
 </body>
