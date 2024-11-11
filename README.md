@@ -25,13 +25,8 @@ git clone https://github.com/your-username/employee-management.git
 cd employee_management
 ```
 
-2. **Create a .env in root directory**
 
-```
-SECRET_KEY=your_secret_key_here
-DEBUG=True
-```
-3.**create a virtual environment**
+2. **create a virtual environment**
 
 ```
 python -m venv venv
@@ -39,18 +34,18 @@ source venv/bin/activate   # For Linux/macOS
 venv\Scripts\activate      # For Windows
 ```
 
-4.**Install dependencies**
+3. **Install dependencies**
 
 ```
 pip install -r requirements.txt
 ```
-5.**Apply migrations and run the server**
+4. **Apply migrations and run the server**
 
 ```
 python manage.py migrate
 python manage.py runserver
 ```
-6.**Access the application**
+5. **Access the application**
 
 ```
 http://127.0.0.1:8000

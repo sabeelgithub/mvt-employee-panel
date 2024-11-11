@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,11 +32,11 @@
                     </div>
                 </div>
 
-                <!-- Custom Fields Container -->
+                <!-- Custom Fields Container with Drag-and-Drop -->
                 <div id="custom-fields-container" class="space-y-4">
                     {% if employee.custom_fields %}
                         {% for key, value in employee.custom_fields.items %}
-                            <div class="flex gap-3 mb-3 p-2 border rounded-md custom-field">
+                            <div class="flex gap-3 mb-3 p-2 border rounded-md custom-field" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)">
                                 <input type="text" name="custom_fields[name][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ key }}" placeholder="Custom Field Name">
                                 <input type="text" name="custom_fields[value][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ value }}" placeholder="Custom Field Value">
                                 <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-md ml-4 delete-custom-field" onclick="removeCustomField(this)">Delete</button>
@@ -66,28 +65,52 @@
     </div>
 
     <script>
+        // Variables for drag-and-drop functionality
+        let draggedElement;
+
+        function drag(event) {
+            draggedElement = event.target;
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            if (draggedElement !== event.target) {
+                const container = document.getElementById('custom-fields-container');
+                container.insertBefore(draggedElement, event.target.nextSibling);
+            }
+        }
+
         // Add a new custom field
         document.getElementById('add-custom-field').addEventListener('click', function() {
-            var container = document.getElementById('custom-fields-container');
-            var newField = document.createElement('div');
+            const container = document.getElementById('custom-fields-container');
+            const newField = document.createElement('div');
             newField.classList.add('flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field');
+            newField.draggable = true;
+            newField.ondragstart = drag;
+            newField.ondragover = allowDrop;
+            newField.ondrop = drop;
 
             // Name input for custom field
-            var nameInput = document.createElement('input');
+            const nameInput = document.createElement('input');
             nameInput.type = 'text';
             nameInput.name = 'custom_fields[name][]';
             nameInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
             nameInput.placeholder = 'Custom Field Name';
 
             // Value input for custom field
-            var valueInput = document.createElement('input');
+            const valueInput = document.createElement('input');
             valueInput.type = 'text';
             valueInput.name = 'custom_fields[value][]';
             valueInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
             valueInput.placeholder = 'Custom Field Value';
 
             // Delete button for this field
-            var deleteButton = document.createElement('button');
+            const deleteButton = document.createElement('button');
             deleteButton.type = 'button';
             deleteButton.classList.add('bg-red-500', 'text-white', 'px-4', 'py-2', 'rounded-md', 'ml-4');
             deleteButton.textContent = 'Delete';
@@ -104,7 +127,7 @@
 
         // Remove a custom field and ensure it's not submitted
         function removeCustomField(button) {
-            var customFieldContainer = button.closest('.custom-field');
+            const customFieldContainer = button.closest('.custom-field');
             if (customFieldContainer) {
                 customFieldContainer.remove();
             }
@@ -112,11 +135,11 @@
 
         // Prepare JSON for form submission
         document.getElementById('employee-form').addEventListener('submit', function(e) {
-            var customFields = {};
-            var nameInputs = document.querySelectorAll('input[name="custom_fields[name][]"]');
-            var valueInputs = document.querySelectorAll('input[name="custom_fields[value][]"]');
+            const customFields = {};
+            const nameInputs = document.querySelectorAll('input[name="custom_fields[name][]"]');
+            const valueInputs = document.querySelectorAll('input[name="custom_fields[value][]"]');
 
-            for (var i = 0; i < nameInputs.length; i++) {
+            for (let i = 0; i < nameInputs.length; i++) {
                 if (nameInputs[i].value && valueInputs[i].value) {
                     customFields[nameInputs[i].value] = valueInputs[i].value;
                 }
@@ -125,7 +148,6 @@
             // Set custom fields as JSON string with key-value pairs
             document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
         });
-
         document.addEventListener("DOMContentLoaded", function() {
             const SuccessMessage = document.getElementById("rg");
             if (SuccessMessage) {
@@ -143,4 +165,3 @@
     </script>
 </body>
 </html>
-

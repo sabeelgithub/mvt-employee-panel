@@ -1,5 +1,6 @@
-# forms.py
 from django import forms
+from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
 
 from .models import CustomUser
 
@@ -17,7 +18,6 @@ class RegisterForm(forms.ModelForm):
         model = CustomUser
         fields = ['username', 'email', 'password','phone']
 
-    # Custom validation for unique username, email, and phone
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if CustomUser.objects.filter(username=username).exists():
@@ -32,8 +32,30 @@ class RegisterForm(forms.ModelForm):
     
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
-        # Custom validation to ensure phone is unique
         if CustomUser.objects.filter(phone=phone).exists():
             raise forms.ValidationError("A user with this phone number already exists.")
         return phone
+    
 
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(widget=forms.PasswordInput, required=True)
+    new_password = forms.CharField(widget=forms.PasswordInput, required=True, min_length=5)
+    confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
+
+    def __init__(self, user, *args, **kwargs):
+        super(ChangePasswordForm, self).__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+        if not authenticate(username=self.user.username, password=current_password):
+            raise ValidationError("Current password is incorrect.")
+        return current_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if new_password != confirm_password:
+            self.add_error("confirm_password", "New password and confirm password do not match.")
+        return cleaned_data

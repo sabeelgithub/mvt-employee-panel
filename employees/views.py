@@ -8,13 +8,14 @@ from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from django.views.decorators.cache import never_cache
 
 from .models import Employee
 from .forms import EmployeeForm
 
 
 class EmployeesList(View):
-
+    @method_decorator(never_cache)
     @method_decorator(login_required)
     def get(self, request):
         employees = Employee.objects.filter(user=request.user).order_by('-created_at')
@@ -39,6 +40,7 @@ class EmployeesList(View):
 
 
 class EmployeeCreate(View):
+    @method_decorator(never_cache)
     @method_decorator(login_required)
     def get(self,request):
         form = EmployeeForm()
@@ -59,6 +61,7 @@ class EmployeeCreate(View):
       
             
 class SingleEmployeeDetail(View):
+    @method_decorator(never_cache)
     @method_decorator(login_required)
     def get(self,request,id):
         employee = Employee.objects.filter(user=request.user).get(id=id)
@@ -70,6 +73,7 @@ class SingleEmployeeDetail(View):
 
 
 class EmployeeUpdate(View):
+    @method_decorator(never_cache)
     @method_decorator(login_required)
     def get(self,request,id):
         employee = Employee.objects.filter(user=request.user).get(id=id)
@@ -100,6 +104,7 @@ class EmployeeUpdate(View):
 
 
 class EmployeeDelete(View):
+    @method_decorator(never_cache)
     @method_decorator(login_required)
     def delete(self, request, id):
         employee = Employee.objects.filter(user=request.user).get(id=id)
