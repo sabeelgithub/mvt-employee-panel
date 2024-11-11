@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'Trigger an API call every 20 seconds'
 
     def handle(self, *args, **kwargs):
-        api_url = f'{BACKEND_URL}/accounts/check/'  # Replace with your API URL
+        api_url = f'{BACKEND_URL}/check/'  # Replace with your API URL
 
         try:
             while True:
