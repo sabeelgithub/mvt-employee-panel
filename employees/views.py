@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
+from django.db.models import Q
 
 from .models import Employee
 from .forms import EmployeeForm
@@ -22,7 +23,14 @@ class EmployeesList(View):
         search_term = request.GET.get('search', '')
 
         if search_term:
-            employees = employees.filter(name__icontains=search_term)
+            employees = employees.filter(
+                Q(name__icontains=search_term) |
+                Q(position__icontains=search_term) |
+                Q(email__icontains=search_term) |
+                Q(custom_fields__icontains={search_term:""}) | # This checks for any key with the search term
+                Q(custom_fields__icontains=search_term)  # This checks for values that match the search term
+            )
+       
 
         # Check if the request is an AJAX request
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

@@ -5,6 +5,18 @@
       <td class="py-3 px-6 text-gray-800">{{ employee.email }}</td>
       <td class="py-3 px-6 text-gray-600">{{ employee.position }}</td>
       <td class="py-3 px-6 text-gray-600">
+        <!-- Render custom fields here -->
+        {% if employee.custom_fields %}
+            <ul class="list-disc ml-5">
+                {% for field, value in employee.custom_fields.items %}
+                    <li><strong>{{ field }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <span>No custom fields</span>
+        {% endif %}
+    </td>
+      <td class="py-3 px-6 text-gray-600">
         <a href="{% url 'employee_view' employee.id %}" class="py-3 px-6 text-blue-600 underline">View</a>
       </td>
     </tr>
