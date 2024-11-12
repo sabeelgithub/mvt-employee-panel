@@ -22,7 +22,7 @@ Make sure the following are installed on your machine
 1. **clone the repository**
 
 ```
-git clone https://github.com/your-username/employee-management.git
+git https://github.com/sabeelgithub/vuez-employee.git
 cd employee_management
 ```
 
