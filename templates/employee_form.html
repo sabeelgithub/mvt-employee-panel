@@ -210,35 +210,75 @@
         initializeDragAndDrop('standard-fields-container');
         initializeDragAndDrop('custom-fields-container');
 
-        document.getElementById('employee-form').addEventListener('submit', function(e) {
+    // document.getElementById('employee-form').addEventListener('submit', function(e) {
+    // const customFields = {};
+    // const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
+    
+    // let duplicateFound = false;
+    // customFieldContainers.forEach(field => {
+    //     const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
+    //     const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
+    //     if (nameInput && valueInput && nameInput.value && valueInput.value) {
+    //         if (customFields[nameInput.value]) {
+    //             duplicateFound = true;
+    //             // Show a toast notification for the duplicate
+    //             showToast(`Duplicate custom field name: ${nameInput.value}`);
+    //             nameInput.classList.add('border-red-500');  // Optionally highlight the duplicate field
+    //         } else {
+    //             customFields[nameInput.value] = valueInput.value;
+    //         }
+    //     }
+    // });
+
+    // // If duplicates are found, prevent form submission
+    // if (duplicateFound) {
+    //     e.preventDefault();
+    //     return false;
+    // }
+
+    // // Set the custom fields JSON if no duplicates
+    // document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
+    // });
+
+    document.getElementById('employee-form').addEventListener('submit', function(e) {
     const customFields = {};
     const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
-    
+
+    // List of standard field names that should not be used in custom fields
+    const reservedFieldNames = ["Name", "Email", "Position"];
+
     let duplicateFound = false;
     customFieldContainers.forEach(field => {
         const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
         const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
         if (nameInput && valueInput && nameInput.value && valueInput.value) {
-            if (customFields[nameInput.value]) {
+            // Check if the custom field name is in the reserved names list
+            if (reservedFieldNames.includes(nameInput.value)) {
                 duplicateFound = true;
-                // Show a toast notification for the duplicate
+                // Show a toast notification for using a reserved name
+                showToast(`'${nameInput.value}' is a standard field and cannot be used as a custom field.`);
+                nameInput.classList.add('border-red-500'); // Optionally highlight the field with error
+            } else if (customFields[nameInput.value]) {
+                duplicateFound = true;
+                // Show a toast notification for duplicate field name
                 showToast(`Duplicate custom field name: ${nameInput.value}`);
-                nameInput.classList.add('border-red-500');  // Optionally highlight the duplicate field
+                nameInput.classList.add('border-red-500'); // Optionally highlight the duplicate field
             } else {
                 customFields[nameInput.value] = valueInput.value;
             }
         }
     });
 
-    // If duplicates are found, prevent form submission
+    // If duplicates or reserved names are found, prevent form submission
     if (duplicateFound) {
         e.preventDefault();
         return false;
     }
 
-    // Set the custom fields JSON if no duplicates
+    // Set the custom fields JSON if no duplicates or reserved names are found
     document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
     });
+
 
     function showToast(message) {
         const toastContainer = document.getElementById('toast-container');
