@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if is_update %}Edit Employee{% else %}Add Employee{% endif %}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .toast {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: fadeInOut 3s ease-out forwards;
+        }
+    
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="flex items-center h-screen justify-center">
@@ -29,6 +59,9 @@
                     <div class="draggable-field p-2 border rounded-md" draggable="true">
                         <label for="email" class="block text-sm font-medium text-gray-600">Email</label>
                         <input type="email" id="email" name="email" value="{{ employee.email }}" placeholder="Enter Email of Employee" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
+                        {% if form.email.errors %}
+                            <p id="email-error" class="text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -176,6 +209,77 @@
         // Initialize drag and drop for both standard and custom field containers
         initializeDragAndDrop('standard-fields-container');
         initializeDragAndDrop('custom-fields-container');
+
+        document.getElementById('employee-form').addEventListener('submit', function(e) {
+    const customFields = {};
+    const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
+    
+    let duplicateFound = false;
+    customFieldContainers.forEach(field => {
+        const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
+        const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
+        if (nameInput && valueInput && nameInput.value && valueInput.value) {
+            if (customFields[nameInput.value]) {
+                duplicateFound = true;
+                // Show a toast notification for the duplicate
+                showToast(`Duplicate custom field name: ${nameInput.value}`);
+                nameInput.classList.add('border-red-500');  // Optionally highlight the duplicate field
+            } else {
+                customFields[nameInput.value] = valueInput.value;
+            }
+        }
+    });
+
+    // If duplicates are found, prevent form submission
+    if (duplicateFound) {
+        e.preventDefault();
+        return false;
+    }
+
+    // Set the custom fields JSON if no duplicates
+    document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
+    });
+
+    function showToast(message) {
+        const toastContainer = document.getElementById('toast-container');
+        
+        const toast = document.createElement('div');
+        toast.classList.add('toast');
+        toast.textContent = message;
+        
+        toastContainer.appendChild(toast);
+
+        // Remove the toast after the animation is done
+        setTimeout(() => {
+            toastContainer.removeChild(toast);
+        }, 3000); // 3 seconds duration
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+    // Function to show and hide the error message for 2 seconds
+    function showErrorForSeconds(errorElementId, seconds) {
+        const errorElement = document.getElementById(errorElementId);
+
+        if (errorElement) {
+            // Make the error visible
+            errorElement.style.display = 'block';
+
+            // Hide the error after the specified duration (2 seconds in this case)
+            setTimeout(function() {
+                errorElement.style.display = 'none';
+            }, seconds * 1000);
+        }
+    }
+
+    // Check if the email error exists and show it for 2 seconds
+    if (document.getElementById('email-error')) {
+        showErrorForSeconds('email-error', 2);
+    }
+});
+
+
+
     </script>
+    <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
 </body>
 </html>

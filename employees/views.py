@@ -88,7 +88,6 @@ class EmployeeUpdate(View):
         employee = Employee.objects.filter(user=request.user).get(id=id)
         
         form = EmployeeForm(request.POST, instance=employee)
-
         if form.is_valid():
             form.save()
             # messages.success(request, "Employee updated successfully.")
@@ -98,7 +97,8 @@ class EmployeeUpdate(View):
             # messages.error(request, "There was an error creating the employee.")
             context = {
             'employee': employee,
-            'is_update':True
+            'is_update':True,
+            'form':form
             }
             return render(request, 'employee_form.html', context)
 

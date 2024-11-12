@@ -9,4 +9,15 @@ class EmployeeForm(forms.ModelForm):
 
     class Meta:
         model = Employee
-        fields = ['name', 'position', 'email','custom_fields']  # Customize fields based on your model
+        fields = ['name', 'position', 'email','custom_fields']
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # Get the instance of the employee (if it's being updated)
+        instance = self.instance
+
+        if instance and instance.email != email:  # Ensure the current employee's email is not checked
+            if Employee.objects.filter(email=email).exists():
+                raise forms.ValidationError("This Email Is Already Taken By Someone Else")
+        
+        return email
