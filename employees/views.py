@@ -53,10 +53,10 @@ class EmployeeCreate(View):
                 employee = form.save(commit=False)
                 employee.user = request.user
                 employee.save()
-                messages.success(request, "Employee created successfully.")
+                # messages.success(request, "Employee created successfully.")
                 return redirect('employee_list')
             else:
-                messages.error(request, "There was an error creating the employee.")
+                # messages.error(request, "There was an error creating the employee.")
                 return render(request, 'employee_form.html', {'form': form})
       
             
@@ -91,11 +91,11 @@ class EmployeeUpdate(View):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Employee updated successfully.")
+            # messages.success(request, "Employee updated successfully.")
 
             return redirect(reverse('employee_view', args=[employee.id]))
         else:
-            messages.error(request, "There was an error creating the employee.")
+            # messages.error(request, "There was an error creating the employee.")
             context = {
             'employee': employee,
             'is_update':True

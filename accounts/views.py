@@ -40,7 +40,6 @@ class LoginView(View):
                     'refresh_token': str(refresh),
                 }
                 return redirect('employee_list')
-                # return render(request, 'dashboard.html', {'tokens': tokens, 'user': user})
 
             form.add_error(None, 'Invalid username or password.')
 
@@ -82,7 +81,7 @@ class ChangePasswordView(LoginRequiredMixin, View):
             request.user.set_password(new_password)
             request.user.save()
             update_session_auth_hash(request, request.user)
-            messages.success(request, 'Your password was successfully updated!')
+            # messages.success(request, 'Your password was successfully updated!')
             return redirect('employee_list')  
         return render(request, 'change_password.html', {'form': form})
 

@@ -16,27 +16,27 @@
             <form id="employee-form" method="post" action="{% if is_update %}{% url 'employee_update' employee.id %}{% else %}{% url 'employee_create' %}{% endif %}" class="space-y-4">
                 {% csrf_token %}
 
-                <!-- Employee details fields -->
-                <div class="space-y-4">
-                    <div>
+                <!-- Draggable Standard Fields Container -->
+                <div id="standard-fields-container" class="space-y-4 draggable-area" data-field-type="standard">
+                    <div class="draggable-field p-2 border rounded-md" draggable="true">
                         <label for="name" class="block text-sm font-medium text-gray-600">Name</label>
                         <input type="text" id="name" name="name" value="{{ employee.name }}" placeholder="Enter Employee Name" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
-                    <div>
+                    <div class="draggable-field p-2 border rounded-md" draggable="true">
                         <label for="position" class="block text-sm font-medium text-gray-600">Position</label>
                         <input type="text" id="position" name="position" value="{{ employee.position }}" placeholder="Enter Position of Employee" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
-                    <div>
+                    <div class="draggable-field p-2 border rounded-md" draggable="true">
                         <label for="email" class="block text-sm font-medium text-gray-600">Email</label>
                         <input type="email" id="email" name="email" value="{{ employee.email }}" placeholder="Enter Email of Employee" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
                     </div>
                 </div>
 
-                <!-- Custom Fields Container with Drag-and-Drop -->
-                <div id="custom-fields-container" class="space-y-4">
+                <!-- Draggable Custom Fields Container -->
+                <div id="custom-fields-container" class="space-y-4 draggable-area" data-field-type="custom">
                     {% if employee.custom_fields %}
                         {% for key, value in employee.custom_fields.items %}
-                            <div class="flex gap-3 mb-3 p-2 border rounded-md custom-field" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)">
+                            <div class="draggable-field flex gap-3 mb-3 p-2 border rounded-md custom-field" draggable="true">
                                 <input type="text" name="custom_fields[name][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ key }}" placeholder="Custom Field Name">
                                 <input type="text" name="custom_fields[value][]" class="w-full p-2 border border-gray-300 rounded-md" value="{{ value }}" placeholder="Custom Field Value">
                                 <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-md ml-4 delete-custom-field" onclick="removeCustomField(this)">Delete</button>
@@ -65,67 +65,60 @@
     </div>
 
     <script>
-        // Variables for drag-and-drop functionality
         let draggedElement;
+        let placeholder;
 
-        function drag(event) {
-            draggedElement = event.target;
-            event.dataTransfer.effectAllowed = 'move';
+        function initializeDragAndDrop(containerId) {
+            const container = document.getElementById(containerId);
+            const fields = container.querySelectorAll('.draggable-field');
+
+            fields.forEach(field => {
+                field.addEventListener('dragstart', dragStart);
+                field.addEventListener('dragenter', dragEnter);
+                field.addEventListener('dragover', dragOver);
+                field.addEventListener('dragleave', dragLeave);
+                field.addEventListener('drop', drop);
+                field.addEventListener('dragend', dragEnd);
+            });
         }
 
-        function allowDrop(event) {
+        function dragStart(event) {
+            draggedElement = this;
+            placeholder = document.createElement('div');
+            placeholder.classList.add('placeholder', 'p-2', 'border', 'border-dashed', 'rounded-md');
+            this.classList.add('dragged');
+            setTimeout(() => this.classList.add('hidden'), 0);
+        }
+
+        function dragEnter(event) {
+            if (this !== draggedElement && this.parentNode === draggedElement.parentNode) {
+                this.parentNode.insertBefore(placeholder, this);
+            }
+        }
+
+        function dragOver(event) {
             event.preventDefault();
+        }
+
+        function dragLeave(event) {
+            if (this.parentNode.contains(placeholder)) {
+                this.parentNode.removeChild(placeholder);
+            }
         }
 
         function drop(event) {
             event.preventDefault();
-            if (draggedElement !== event.target) {
-                const container = document.getElementById('custom-fields-container');
-                container.insertBefore(draggedElement, event.target.nextSibling);
+            if (this !== draggedElement && this.parentNode === draggedElement.parentNode) {
+                this.parentNode.insertBefore(draggedElement, this);
+                this.parentNode.insertBefore(this, draggedElement);
             }
         }
 
-        // Add a new custom field
-        document.getElementById('add-custom-field').addEventListener('click', function() {
-            const container = document.getElementById('custom-fields-container');
-            const newField = document.createElement('div');
-            newField.classList.add('flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field');
-            newField.draggable = true;
-            newField.ondragstart = drag;
-            newField.ondragover = allowDrop;
-            newField.ondrop = drop;
+        function dragEnd(event) {
+            this.classList.remove('hidden', 'dragged');
+            placeholder.remove();
+        }
 
-            // Name input for custom field
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.name = 'custom_fields[name][]';
-            nameInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
-            nameInput.placeholder = 'Custom Field Name';
-
-            // Value input for custom field
-            const valueInput = document.createElement('input');
-            valueInput.type = 'text';
-            valueInput.name = 'custom_fields[value][]';
-            valueInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
-            valueInput.placeholder = 'Custom Field Value';
-
-            // Delete button for this field
-            const deleteButton = document.createElement('button');
-            deleteButton.type = 'button';
-            deleteButton.classList.add('bg-red-500', 'text-white', 'px-4', 'py-2', 'rounded-md', 'ml-4');
-            deleteButton.textContent = 'Delete';
-            deleteButton.onclick = function() {
-                removeCustomField(deleteButton);
-            };
-
-            newField.appendChild(nameInput);
-            newField.appendChild(valueInput);
-            newField.appendChild(deleteButton);
-
-            container.appendChild(newField);
-        });
-
-        // Remove a custom field and ensure it's not submitted
         function removeCustomField(button) {
             const customFieldContainer = button.closest('.custom-field');
             if (customFieldContainer) {
@@ -133,35 +126,56 @@
             }
         }
 
-        // Prepare JSON for form submission
+        document.getElementById('add-custom-field').addEventListener('click', function() {
+            const container = document.getElementById('custom-fields-container');
+            const newField = document.createElement('div');
+            newField.classList.add('flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field', 'draggable-field');
+            newField.draggable = true;
+
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.name = 'custom_fields[name][]';
+            nameInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
+            nameInput.placeholder = 'Custom Field Name';
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.name = 'custom_fields[value][]';
+            valueInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
+            valueInput.placeholder = 'Custom Field Value';
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.classList.add('bg-red-500', 'text-white', 'px-4', 'py-2', 'rounded-md', 'ml-4');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = () => removeCustomField(deleteButton);
+
+            newField.appendChild(nameInput);
+            newField.appendChild(valueInput);
+            newField.appendChild(deleteButton);
+
+            container.appendChild(newField);
+            initializeDragAndDrop('custom-fields-container');
+        });
+
         document.getElementById('employee-form').addEventListener('submit', function(e) {
             const customFields = {};
-            const nameInputs = document.querySelectorAll('input[name="custom_fields[name][]"]');
-            const valueInputs = document.querySelectorAll('input[name="custom_fields[value][]"]');
+            const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
 
-            for (let i = 0; i < nameInputs.length; i++) {
-                if (nameInputs[i].value && valueInputs[i].value) {
-                    customFields[nameInputs[i].value] = valueInputs[i].value;
+            customFieldContainers.forEach(field => {
+                const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
+                const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
+                if (nameInput && valueInput && nameInput.value && valueInput.value) {
+                    customFields[nameInput.value] = valueInput.value;
                 }
-            }
+            });
 
-            // Set custom fields as JSON string with key-value pairs
             document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
         });
-        document.addEventListener("DOMContentLoaded", function() {
-            const SuccessMessage = document.getElementById("rg");
-            if (SuccessMessage) {
-                setTimeout(() => {
-                    SuccessMessage.style.transition = "opacity 1s";
-                    SuccessMessage.style.opacity = 0;
-                }, 1000); // 5 seconds delay
 
-                // Optionally, remove the element from the DOM after fade-out
-                setTimeout(() => {
-                    SuccessMessage.style.display = "none";
-                }, 6000); // Hide after the transition
-            }
-        });
+        // Initialize drag and drop for both standard and custom field containers
+        initializeDragAndDrop('standard-fields-container');
+        initializeDragAndDrop('custom-fields-container');
     </script>
 </body>
 </html>
