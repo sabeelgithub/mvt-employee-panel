@@ -62,7 +62,7 @@ class RegisterView(View):
             user.set_password(form.cleaned_data['password'])
             user.save()
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'redirect_url': reverse('employee_list')})
+                return JsonResponse({'success': True, 'redirect_url': reverse('home')})
                 # return JsonResponse({'success': True, 'message': 'Your password was successfully updated!'})
             return redirect('employee_list')
         else:
