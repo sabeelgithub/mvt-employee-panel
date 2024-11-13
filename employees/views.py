@@ -3,7 +3,6 @@ from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.http import JsonResponse
@@ -32,13 +31,10 @@ class EmployeesList(View):
             )
        
 
-        # Check if the request is an AJAX request
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Render the table rows to send back in the response
             html = render_to_string('employee_table_rows.html', {'employees': employees})
             return JsonResponse({'html': html})
         
-        # Return the normal response for the page load
         context = {
             'employees': employees,
             'search_term': search_term,
@@ -46,28 +42,60 @@ class EmployeesList(View):
         return render(request, 'employee_list.html', context)
 
 
-
 class EmployeeCreate(View):
     @method_decorator(never_cache)
     @method_decorator(login_required)
-    def get(self,request):
+    def get(self, request):
         form = EmployeeForm()
-        return render(request,'employee_form.html',{'form': form})
+        return render(request, 'employee_form.html', {'form': form})
     
     @method_decorator(login_required)
-    def post(self,request):
-            form = EmployeeForm(request.POST)
-            if form.is_valid():
-                employee = form.save(commit=False)
-                employee.user = request.user
-                employee.save()
-                # messages.success(request, "Employee created successfully.")
-                return redirect('employee_list')
-            else:
-                # messages.error(request, "There was an error creating the employee.")
-                return render(request, 'employee_form.html', {'form': form})
-      
-            
+    def post(self, request):
+        print(request.POST,'data')
+        form = EmployeeForm(request.POST)
+        if form.is_valid():
+            employee = form.save(commit=False)
+            employee.user = request.user
+            employee.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': reverse('employee_list')})
+            return redirect('employee_list')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                first_error_message = next(iter(form.errors.values()))[0]
+                return JsonResponse({'success': False, 'error':first_error_message})
+            return render(request, 'employee_form.html', {'form': form})
+
+
+class EmployeeUpdate(View):
+    @method_decorator(never_cache)
+    @method_decorator(login_required)
+    def get(self, request, id):
+        employee = Employee.objects.filter(user=request.user).get(id=id)
+        context = {
+            'employee': employee,
+            'is_update': True
+        }
+        return render(request, 'employee_form.html', context)
+    
+    @method_decorator(login_required)
+    def post(self, request, id):
+        print(request.POST,'data')
+        employee = Employee.objects.filter(user=request.user).get(id=id)
+        form = EmployeeForm(request.POST, instance=employee)
+        if form.is_valid():
+            form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': reverse('employee_view', args=[employee.id])})
+            return redirect(reverse('employee_view', args=[employee.id]))
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                first_error_message = next(iter(form.errors.values()))[0]
+                return JsonResponse({'success': False, 'error': first_error_message})
+            return render(request, 'employee_form.html', {'form': form, 'is_update': True, 'employee': employee})
+
+
+    
 class SingleEmployeeDetail(View):
     @method_decorator(never_cache)
     @method_decorator(login_required)
@@ -77,44 +105,14 @@ class SingleEmployeeDetail(View):
             'employee': employee
         }
         return render(request, 'employee_view.html', context)
-
-
-
-class EmployeeUpdate(View):
-    @method_decorator(never_cache)
-    @method_decorator(login_required)
-    def get(self,request,id):
-        employee = Employee.objects.filter(user=request.user).get(id=id)
-        context = {
-            'employee': employee,
-            'is_update':True
-        }
-        return render(request, 'employee_form.html', context)
     
-    @method_decorator(login_required)
-    def post(self,request,id):
-        employee = Employee.objects.filter(user=request.user).get(id=id)
-        
-        form = EmployeeForm(request.POST, instance=employee)
-        if form.is_valid():
-            form.save()
-            # messages.success(request, "Employee updated successfully.")
-
-            return redirect(reverse('employee_view', args=[employee.id]))
-        else:
-            # messages.error(request, "There was an error creating the employee.")
-            context = {
-            'employee': employee,
-            'is_update':True,
-            'form':form
-            }
-            return render(request, 'employee_form.html', context)
-
 
 class EmployeeDelete(View):
-    @method_decorator(never_cache)
     @method_decorator(login_required)
     def delete(self, request, id):
-        employee = Employee.objects.filter(user=request.user).get(id=id)
-        employee.delete()
-        return JsonResponse({'message': 'Employee deleted successfully'}, status=200)
+        try:
+            employee = Employee.objects.filter(user=request.user).get(id=id)
+            employee.delete()
+            return JsonResponse({'success': True}, status=200)
+        except Employee.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Employee not found'}, status=404)

@@ -40,7 +40,7 @@ class RegisterForm(forms.ModelForm):
 class ChangePasswordForm(forms.Form):
     current_password = forms.CharField(widget=forms.PasswordInput, required=True)
     new_password = forms.CharField(widget=forms.PasswordInput, required=True, min_length=5)
-    confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput, required=True,min_length=5)
 
     def __init__(self, user, *args, **kwargs):
         super(ChangePasswordForm, self).__init__(*args, **kwargs)

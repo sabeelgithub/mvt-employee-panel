@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib.auth import authenticate,login,logout
 from django.shortcuts import redirect
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -16,8 +17,7 @@ from django.conf.urls import handler404
 
 from .forms import LoginForm,RegisterForm,ChangePasswordForm
 
-class LoginView(View):
-    
+class Home(View):
     @method_decorator(never_cache)
     def get(self, request):
         if request.user.is_authenticated:
@@ -25,6 +25,7 @@ class LoginView(View):
         form = LoginForm()
         return render(request, 'login.html', {'form': form})
 
+class LoginView(View):
     def post(self, request):
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -39,15 +40,14 @@ class LoginView(View):
                     'access_token': str(refresh.access_token),
                     'refresh_token': str(refresh),
                 }
-                return redirect('employee_list')
+                return JsonResponse({'success': True, 'redirect_url': reverse('employee_list')})
 
-            form.add_error(None, 'Invalid username or password.')
-
-        return render(request, 'login.html', {'form': form})
-
+            return JsonResponse({'success': False, 'message':'Invalid username or password.'})
+        
+        errors = form.errors.get_json_data()
+        return JsonResponse({'success': False, 'message': errors}, status=400)
 
 class RegisterView(View):
-    
     @method_decorator(never_cache)
     def get(self, request):
         if request.user.is_authenticated:
@@ -61,11 +61,18 @@ class RegisterView(View):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            return redirect('login')
-        
-        return render(request, 'register.html', {'form': form})
-    
-        
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': reverse('employee_list')})
+                # return JsonResponse({'success': True, 'message': 'Your password was successfully updated!'})
+            return redirect('employee_list')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = {field: [{'message': error} for error in error_list] for field, error_list in form.errors.items()}
+                return JsonResponse({'success': False, 'errors': errors})
+            return render(request, 'change_password.html', {'form': form})
+
+
+
 class ChangePasswordView(LoginRequiredMixin, View):
     @method_decorator(never_cache)
     @method_decorator(login_required)
@@ -81,14 +88,19 @@ class ChangePasswordView(LoginRequiredMixin, View):
             request.user.set_password(new_password)
             request.user.save()
             update_session_auth_hash(request, request.user)
-            # messages.success(request, 'Your password was successfully updated!')
-            return redirect('employee_list')  
-        return render(request, 'change_password.html', {'form': form})
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': reverse('employee_list'), 'message': 'Your password was successfully updated!'})
+            return redirect('employee_list')
+        else:
+            errors = {field: error[0] for field, error in form.errors.items()}
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            return render(request, 'change_password.html', {'form': form})
 
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('home')
 
 
 # Custom 404 error handler function

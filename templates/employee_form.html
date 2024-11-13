@@ -16,23 +16,12 @@
             opacity: 0;
             animation: fadeInOut 3s ease-out forwards;
         }
-    
+
         @keyframes fadeInOut {
-            0% {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            30% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            80% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(10px);
-            }
+            0% { opacity: 0; transform: translateY(-10px); }
+            30% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(10px); }
         }
     </style>
 </head>
@@ -43,7 +32,7 @@
                 {% if is_update %}Edit Employee{% else %}Add Employee{% endif %}
             </h2>
 
-            <form id="employee-form" method="post" action="{% if is_update %}{% url 'employee_update' employee.id %}{% else %}{% url 'employee_create' %}{% endif %}" class="space-y-4">
+            <form id="employee-form" method="post" class="space-y-4">
                 {% csrf_token %}
 
                 <!-- Draggable Standard Fields Container -->
@@ -78,8 +67,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Hidden input for custom fields JSON -->
-                <input type="hidden" required id="custom-fields-json" name="custom_fields">
                 <!-- Button to add more custom fields -->
                 <button type="button" id="add-custom-field" class="w-full bg-blue-500 text-white p-2 rounded-md mt-4">Add Custom Field</button>
 
@@ -87,239 +74,140 @@
                 <button type="submit" class="w-full bg-green-500 text-white p-2 rounded-md mt-4">Save</button>
             </form>
 
-            <div id="form-messages" class="mt-4">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div id="rg" class="text-green-500">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
+            <div id="form-messages" class="mt-4"></div>
         </div>
     </div>
 
-    <script>
-        let draggedElement;
-        let placeholder;
-
-        function initializeDragAndDrop(containerId) {
-            const container = document.getElementById(containerId);
-            const fields = container.querySelectorAll('.draggable-field');
-
-            fields.forEach(field => {
-                field.addEventListener('dragstart', dragStart);
-                field.addEventListener('dragenter', dragEnter);
-                field.addEventListener('dragover', dragOver);
-                field.addEventListener('dragleave', dragLeave);
-                field.addEventListener('drop', drop);
-                field.addEventListener('dragend', dragEnd);
-            });
-        }
-
-        function dragStart(event) {
-            draggedElement = this;
-            placeholder = document.createElement('div');
-            placeholder.classList.add('placeholder', 'p-2', 'border', 'border-dashed', 'rounded-md');
-            this.classList.add('dragged');
-            setTimeout(() => this.classList.add('hidden'), 0);
-        }
-
-        function dragEnter(event) {
-            if (this !== draggedElement && this.parentNode === draggedElement.parentNode) {
-                this.parentNode.insertBefore(placeholder, this);
-            }
-        }
-
-        function dragOver(event) {
-            event.preventDefault();
-        }
-
-        function dragLeave(event) {
-            if (this.parentNode.contains(placeholder)) {
-                this.parentNode.removeChild(placeholder);
-            }
-        }
-
-        function drop(event) {
-            event.preventDefault();
-            if (this !== draggedElement && this.parentNode === draggedElement.parentNode) {
-                this.parentNode.insertBefore(draggedElement, this);
-                this.parentNode.insertBefore(this, draggedElement);
-            }
-        }
-
-        function dragEnd(event) {
-            this.classList.remove('hidden', 'dragged');
-            placeholder.remove();
-        }
-
-        function removeCustomField(button) {
-            const customFieldContainer = button.closest('.custom-field');
-            if (customFieldContainer) {
-                customFieldContainer.remove();
-            }
-        }
-
-        document.getElementById('add-custom-field').addEventListener('click', function() {
-            const container = document.getElementById('custom-fields-container');
-            const newField = document.createElement('div');
-            newField.classList.add('flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field', 'draggable-field');
-            newField.draggable = true;
-
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.name = 'custom_fields[name][]';
-            nameInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
-            nameInput.placeholder = 'Custom Field Name';
-
-            const valueInput = document.createElement('input');
-            valueInput.type = 'text';
-            valueInput.name = 'custom_fields[value][]';
-            valueInput.classList.add('w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md');
-            valueInput.placeholder = 'Custom Field Value';
-
-            const deleteButton = document.createElement('button');
-            deleteButton.type = 'button';
-            deleteButton.classList.add('bg-red-500', 'text-white', 'px-4', 'py-2', 'rounded-md', 'ml-4');
-            deleteButton.textContent = 'Delete';
-            deleteButton.onclick = () => removeCustomField(deleteButton);
-
-            newField.appendChild(nameInput);
-            newField.appendChild(valueInput);
-            newField.appendChild(deleteButton);
-
-            container.appendChild(newField);
-            initializeDragAndDrop('custom-fields-container');
-        });
-
-        document.getElementById('employee-form').addEventListener('submit', function(e) {
-            const customFields = {};
-            const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
-
-            customFieldContainers.forEach(field => {
-                const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
-                const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
-                if (nameInput && valueInput && nameInput.value && valueInput.value) {
-                    customFields[nameInput.value] = valueInput.value;
-                }
-            });
-
-            document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
-        });
-
-        // Initialize drag and drop for both standard and custom field containers
-        initializeDragAndDrop('standard-fields-container');
-        initializeDragAndDrop('custom-fields-container');
-
-    // document.getElementById('employee-form').addEventListener('submit', function(e) {
-    // const customFields = {};
-    // const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
-    
-    // let duplicateFound = false;
-    // customFieldContainers.forEach(field => {
-    //     const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
-    //     const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
-    //     if (nameInput && valueInput && nameInput.value && valueInput.value) {
-    //         if (customFields[nameInput.value]) {
-    //             duplicateFound = true;
-    //             // Show a toast notification for the duplicate
-    //             showToast(`Duplicate custom field name: ${nameInput.value}`);
-    //             nameInput.classList.add('border-red-500');  // Optionally highlight the duplicate field
-    //         } else {
-    //             customFields[nameInput.value] = valueInput.value;
-    //         }
-    //     }
-    // });
-
-    // // If duplicates are found, prevent form submission
-    // if (duplicateFound) {
-    //     e.preventDefault();
-    //     return false;
-    // }
-
-    // // Set the custom fields JSON if no duplicates
-    // document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
-    // });
-
-    document.getElementById('employee-form').addEventListener('submit', function(e) {
-    const customFields = {};
-    const customFieldContainers = document.querySelectorAll('#custom-fields-container .custom-field');
-
-    // List of standard field names that should not be used in custom fields
-    const reservedFieldNames = ["Name", "Email", "Position"];
-
-    let duplicateFound = false;
-    customFieldContainers.forEach(field => {
-        const nameInput = field.querySelector('input[name="custom_fields[name][]"]');
-        const valueInput = field.querySelector('input[name="custom_fields[value][]"]');
-        if (nameInput && valueInput && nameInput.value && valueInput.value) {
-            // Check if the custom field name is in the reserved names list
-            if (reservedFieldNames.includes(nameInput.value)) {
-                duplicateFound = true;
-                // Show a toast notification for using a reserved name
-                showToast(`'${nameInput.value}' is a standard field and cannot be used as a custom field.`);
-                nameInput.classList.add('border-red-500'); // Optionally highlight the field with error
-            } else if (customFields[nameInput.value]) {
-                duplicateFound = true;
-                // Show a toast notification for duplicate field name
-                showToast(`Duplicate custom field name: ${nameInput.value}`);
-                nameInput.classList.add('border-red-500'); // Optionally highlight the duplicate field
-            } else {
-                customFields[nameInput.value] = valueInput.value;
-            }
-        }
-    });
-
-    // If duplicates or reserved names are found, prevent form submission
-    if (duplicateFound) {
-        e.preventDefault();
-        return false;
-    }
-
-    // Set the custom fields JSON if no duplicates or reserved names are found
-    document.getElementById('custom-fields-json').value = JSON.stringify(customFields);
-    });
-
-
-    function showToast(message) {
-        const toastContainer = document.getElementById('toast-container');
-        
-        const toast = document.createElement('div');
-        toast.classList.add('toast');
-        toast.textContent = message;
-        
-        toastContainer.appendChild(toast);
-
-        // Remove the toast after the animation is done
-        setTimeout(() => {
-            toastContainer.removeChild(toast);
-        }, 3000); // 3 seconds duration
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-    // Function to show and hide the error message for 2 seconds
-    function showErrorForSeconds(errorElementId, seconds) {
-        const errorElement = document.getElementById(errorElementId);
-
-        if (errorElement) {
-            // Make the error visible
-            errorElement.style.display = 'block';
-
-            // Hide the error after the specified duration (2 seconds in this case)
-            setTimeout(function() {
-                errorElement.style.display = 'none';
-            }, seconds * 1000);
-        }
-    }
-
-    // Check if the email error exists and show it for 2 seconds
-    if (document.getElementById('email-error')) {
-        showErrorForSeconds('email-error', 2);
-    }
-});
-
-
-
-    </script>
     <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
+    <script>
+        // Toast message display
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 3000); // Toast disappears after 3 seconds
+        }
+    
+        // Add custom field dynamically
+        document.getElementById('add-custom-field').addEventListener('click', function () {
+            const customFieldsContainer = document.getElementById('custom-fields-container');
+            const field = document.createElement('div');
+            field.classList.add('draggable-field', 'flex', 'gap-3', 'mb-3', 'p-2', 'border', 'rounded-md', 'custom-field');
+            field.setAttribute('draggable', 'true');
+            field.innerHTML = `
+                <input type="text" name="custom_fields[name][]" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Custom Field Name">
+                <input type="text" name="custom_fields[value][]" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Custom Field Value">
+                <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-md ml-4 delete-custom-field" onclick="removeCustomField(this)">Delete</button>
+            `;
+            customFieldsContainer.appendChild(field);
+            addDragAndDropListeners();
+        });
+    
+        // Remove custom field dynamically
+        function removeCustomField(button) {
+            button.closest('.custom-field').remove();
+        }
+    
+        // Drag-and-drop functionality
+        function addDragAndDropListeners() {
+            const draggables = document.querySelectorAll('.draggable-field');
+            const containers = document.querySelectorAll('.draggable-area');
+    
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+    
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                });
+            });
+    
+            containers.forEach(container => {
+                container.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const draggable = document.querySelector('.dragging');
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    if (afterElement == null) {
+                        container.appendChild(draggable);
+                    } else {
+                        container.insertBefore(draggable, afterElement);
+                    }
+                });
+            });
+        }
+    
+        // Helper function to get the element after the dragged element
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable-field:not(.dragging)')];
+    
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+    
+       // Form submission handler    
+       document.getElementById('employee-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        // Define common field names that should not appear as custom fields
+        const commonFields = ['Name', 'Email', 'Position'];
+        
+  
+        // Check for duplicate custom fields
+        const customFields = document.querySelectorAll('.custom-field');
+        const customNames = Array.from(customFields).map(field => field.querySelector('[name="custom_fields[name][]"]').value);
+        if (new Set(customNames).size !== customNames.length) {
+            showToast('Duplicate custom fields found');
+            return;
+        }
+
+        // Validate if any common field is added as a custom field
+        const invalidCustomFields = customNames.filter(name => commonFields.includes(name));
+        if (invalidCustomFields.length > 0) {
+            showToast('Common fields like Name, Email, and Position cannot be added as custom fields.');
+            return;
+        }
+
+        // Prepare custom fields as JSON
+        const customFieldsData = {};
+        customFields.forEach(field => {
+            const name = field.querySelector('[name="custom_fields[name][]"]').value;
+            const value = field.querySelector('[name="custom_fields[value][]"]').value;
+            if (name && value) {
+                customFieldsData[name] = value;
+            }
+        });
+
+        // Add the custom fields JSON to the form data
+        const formData = new FormData(this);
+        formData.append('custom_fields', JSON.stringify(customFieldsData)); // Append JSON as string
+
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            window.location.href = result.redirect_url;
+        } else {
+            showToast(result.error);
+        }
+    });
+        // Initialize drag-and-drop
+        addDragAndDropListeners();
+    </script>
 </body>
 </html>

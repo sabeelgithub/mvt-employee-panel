@@ -10,6 +10,7 @@ class Employee(models.Model):
     position = models.CharField(max_length=100)
     custom_fields = models.JSONField(null=True,blank=True)  # Custom fields storage
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    field_order = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

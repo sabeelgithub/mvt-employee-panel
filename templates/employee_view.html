@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Details</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
-    
+    <!-- CSRF Token for AJAX Requests -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
     <div class="flex flex-col h-screen w-full justify-center items-center">
@@ -74,41 +74,46 @@
     <script>
         let employeeIdToDelete = null;
 
+        // Show the delete confirmation modal
         function showDeleteModal(employeeId) {
             employeeIdToDelete = employeeId;
             document.getElementById('delete-modal').classList.remove('hidden');
         }
 
+        // Hide the delete confirmation modal
         function hideDeleteModal() {
             employeeIdToDelete = null;
             document.getElementById('delete-modal').classList.add('hidden');
         }
 
+        // Perform the delete action
         function confirmDelete() {
             if (employeeIdToDelete) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const baseUrl = window.location.pathname.split('/')[1];
-                fetch(`/${baseUrl}/delete/${employeeIdToDelete}/`, {
+
+                fetch(`/employees/delete/${employeeIdToDelete}/`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json'
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
                     },
                 })
                 .then(response => {
                     if (response.ok) {
-                        // alert('Employee deleted');
+                        // alert('Employee deleted successfully');
                         window.location.href = `/${baseUrl}/list/`; // Redirect to employee list page
                     } else {
                         alert('Failed to delete employee');
                     }
                 })
-                .catch(error => console.error('Error:', error))
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the employee');
+                })
                 .finally(() => hideDeleteModal());
             }
         }
     </script>
-
-
-
 </body>
 </html>
